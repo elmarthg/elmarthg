@@ -146,4 +146,28 @@ Join master..CovidVax vac
 	and dea.date = vac.date
 where dea.continent is not null 
 
+
+
+SELECT LOCATION, SUM(cast(new_deaths as bigint)) as TotalDeathCount
+FROM master..CovidDeaths
+Where continent is null
+and location  not in ('World', 'European Union', 'International', 'Upper middle income', 'High income', 'Lower middle income', 'low income')
+Group by location
+order by TotalDeathCount desc
+
+select location, population, MAX(total_cases) as HighestInfectionCount, Max((total_cases/population))*100 as PercentPopulationInfected
+from master..CovidDeaths
+Group by location, population
+order by PercentPopulationInfected desc
+
+SELECT location, population, date, MAX(total_cases) as HighestInfectionCount, MAX((total_cases/population))*100 as PercentPopulationInfected
+from master..CovidDeaths
+group by location, population, date
+order by PercentPopulationInfected desc
+
+
+
+
+
+
                                                                                                                                                                                               
