@@ -19,7 +19,7 @@ filename P_INQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_INQ.XPT';
 libname P_INQ xport;
 
 **Occupation**;
-filename P_OCQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/OCQ.XPT';
+filename P_OCQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_OCQ.XPT';
 libname P_OCQ xport;
 
 * Download SAS transport files and create temporary SAS datasets *;
@@ -44,7 +44,7 @@ data P_INQ;
 RUN;
 
 data P_OCQ;
-	SET P_OCQ;
+	SET P_OCQ.P_OCQ;
 RUN;
 
 **PREPARE DATASET FOR HTN-OCC EXAMPLE**;
@@ -57,6 +57,17 @@ data htnocc;
 		  P_INQ
 		  P_OCQ;
 	BY SEQN;
-	
 
+**Count of non-missing sbp and dbp**;
+n_sbp = n(of BPXOSY1 - BPXOSY3);
+n_dbp = n(of BPXODI1 - BPXODI3);
+** Set DBP Values Of 0 To Missing For Calculating Average **;
+  array _DBP BPXODI1 - BPXODI3;
+  do over _DBP;
+    if (_DBP = 0) then _DBP = .;
+end;
+
+** Calculate Mean Systolic and Diastolic **;
+  mean_sbp = mean(of BPXOSY1 - BPXOSY3);
+  mean_dbp = mean(of BPXODI1 - BPXODI3);
 	
