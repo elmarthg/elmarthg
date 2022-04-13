@@ -1,0 +1,62 @@
+**demo**;
+filename P_DEMO URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_DEMO.XPT';
+libname P_DEMO xport;
+
+**Blood Pressure and Cholesterol**;
+filename P_BPQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_BPQ.XPT';
+libname P_BPQ xport;
+
+**Blood Pressure Osc**;
+filename P_BPXO URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_BPXO.XPT';
+libname P_BPXO xport;
+
+**Diabetes**;
+filename P_DIQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_DIQ.XPT';
+libname P_DIQ xport;
+
+**Income**;
+filename P_INQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_INQ.XPT';
+libname P_INQ xport;
+
+**Occupation**;
+filename P_OCQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/OCQ.XPT';
+libname P_OCQ xport;
+
+* Download SAS transport files and create temporary SAS datasets *;
+data demo;
+  set P_DEMO.P_DEMO (keep=seqn sddsrvyr riagendr ridageyr ridreth3 sdmvstra sdmvpsu ridexprg );  
+run;
+
+data P_BPQ;
+	SET P_BPQ.P_BPQ;
+RUN;
+
+data P_BPXO;
+	SET P_BPXO.P_BPXO;
+RUN;
+
+data P_DIQ;
+	SET P_DIQ.P_DIQ;
+RUN;
+
+data P_INQ;
+	SET P_INQ.P_INQ;
+RUN;
+
+data P_OCQ;
+	SET P_OCQ;
+RUN;
+
+**PREPARE DATASET FOR HTN-OCC EXAMPLE**;
+
+data htnocc;
+	merge demo
+		  P_BPQ
+		  P_BPXO
+		  P_DIQ
+		  P_INQ
+		  P_OCQ;
+	BY SEQN;
+	
+
+	
