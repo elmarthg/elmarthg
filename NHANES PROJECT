@@ -70,4 +70,30 @@ end;
 ** Calculate Mean Systolic and Diastolic **;
   mean_sbp = mean(of BPXOSY1 - BPXOSY3);
   mean_dbp = mean(of BPXODI1 - BPXODI3);
-	
+
+**HTN Variables**;
+
+ if (mean_sbp >= 130 or mean_dbp >= 80 or bpq020 = 1 or BPQ040A = 1) then HTN = 1;  
+  else if (n_sbp > 0 and n_dbp > 0) then HTN = 0;
+
+if mean_sbp < 130 and mean_dbp < 80 then HTNCat = 0;
+else if 130>=mean_sbp<140 or 80>=mean_dbp<140 then HTNCat = 1;
+else if 140>=mean_sbp<180 or 90>=mean_dbp<120 then HTNCat = 2;
+else if mean_sbp > 180 or mean_dbp >120 then HTNCat = 3;
+
+
+  * race and Hispanic origin categories*;
+  select (ridreth3);
+    when (1,2) raceEthCat=4; * Hispanic ;
+    when (3) raceEthCat=1; * Non-Hispanic white ;
+    when (4) raceEthCat=2; * Non-Hispanic black ;
+    when (6) raceEthCat=3; * Non-Hispanic Asian ;
+    when (7) raceEthCat=5; * Non-Hispanic other race or Non-Hispanic persons of multiple races *;
+    otherwise;
+  end;
+
+  * age categories for adults aged 18 and over *;
+  if 18<=ridageyr<40 then ageCat_18=1;
+  else if 40 <=ridageyr<60 then ageCat_18=2;
+  else if 60 <=ridageyr then ageCat_18=3;
+  
