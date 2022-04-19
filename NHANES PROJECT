@@ -24,7 +24,7 @@ libname P_OCQ xport;
 
 * Download SAS transport files and create temporary SAS datasets *;
 data demo;
-  set P_DEMO.P_DEMO (keep=seqn sddsrvyr riagendr ridageyr ridreth3 sdmvstra sdmvpsu ridexprg );  
+  set P_DEMO.P_DEMO (keep=seqn sddsrvyr riagendr ridageyr ridreth3 sdmvstra sdmvpsu ridexprg WTMECPRP WTINTPRP);  
 run;
 
 data P_BPQ;
@@ -97,6 +97,8 @@ else if mean_sbp > 180 or mean_dbp >120 then HTNCat = 3;
   else if 40 <=ridageyr<60 then ageCat_18=2;
   else if 60 <=ridageyr then ageCat_18=3;
   
+  
+**analysis**;
 
 proc means data=htnocc;
 Var HTNCat;
@@ -112,11 +114,31 @@ title "Weighted prevalence of People who work at night among adults aged 18 and 
 run;
 
 proc freq data=htnocc;
-tables HTNCat AgeCat;
+tables HTNCat ageCat;
 weight WTMECPRP;
 run;
 
 proc freq data=htnocc;
 tables HTNCat OCQ670;
+weight WTMECPRP;
+run;
+
+proc freq data=htnocc;
+tables HTNCat raceEthCat;
+weight WTMECPRP;
+run;
+
+proc freq data=htnocc;
+tables HTNCat raceEthCat;
+weight WTMECPRP;
+run;
+
+proc freq data=htnocc;
+tables HTNCat RIAGENDR;
+weight WTMECPRP;
+run;
+
+proc freq data=htnocc;
+tables HTNCat RIAGENDR raceEthCat ageCat OCQ670;
 weight WTMECPRP;
 run;
