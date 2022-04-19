@@ -77,7 +77,7 @@ end;
   else if (n_sbp > 0 and n_dbp > 0) then HTN = 0;
 
 if mean_sbp < 130 and mean_dbp < 80 then HTNCat = 0;
-else if 130>=mean_sbp<140 or 80>=mean_dbp<140 then HTNCat = 1;
+else if 130>=mean_sbp<140 or 80>=mean_dbp<90 then HTNCat = 1;
 else if 140>=mean_sbp<180 or 90>=mean_dbp<120 then HTNCat = 2;
 else if mean_sbp > 180 or mean_dbp >120 then HTNCat = 3;
 
