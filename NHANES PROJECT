@@ -114,7 +114,7 @@ title "Weighted prevalence of People who work at night among adults aged 18 and 
 run;
 
 proc freq data=htnocc;
-tables HTNCat ageCat;
+tables HTNCat ageCat_18;
 weight WTMECPRP;
 run;
 
@@ -139,6 +139,6 @@ weight WTMECPRP;
 run;
 
 proc freq data=htnocc;
-tables HTNCat RIAGENDR raceEthCat ageCat OCQ670;
+tables HTNCat RIAGENDR raceEthCat ageCat_18 OCQ670;
 weight WTMECPRP;
 run;
