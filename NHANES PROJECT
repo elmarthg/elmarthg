@@ -97,3 +97,26 @@ else if mean_sbp > 180 or mean_dbp >120 then HTNCat = 3;
   else if 40 <=ridageyr<60 then ageCat_18=2;
   else if 60 <=ridageyr then ageCat_18=3;
   
+
+proc means data=htnocc;
+Var HTNCat;
+weight WTMECPRP;
+title "Weighted prevalence of hypertension among adults aged 18 and over, 2017-2020";
+run;
+
+
+proc means data=htnocc;
+Var OCQ670;
+weight WTINTPRP;
+title "Weighted prevalence of People who work at night among adults aged 18 and over, 2017-2020";
+run;
+
+proc freq data=htnocc;
+tables HTNCat AgeCat;
+weight WTMECPRP;
+run;
+
+proc freq data=htnocc;
+tables HTNCat OCQ670;
+weight WTMECPRP;
+run;
