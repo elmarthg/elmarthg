@@ -1,30 +1,26 @@
 **demo**;
 filename P_DEMO URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_DEMO.XPT';
 libname P_DEMO xport;
-
 **Blood Pressure and Cholesterol**;
 filename P_BPQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_BPQ.XPT';
 libname P_BPQ xport;
-
 **Blood Pressure Osc**;
 filename P_BPXO URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_BPXO.XPT';
 libname P_BPXO xport;
-
 **Diabetes**;
 filename P_DIQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_DIQ.XPT';
 libname P_DIQ xport;
-
 **Income**;
 filename P_INQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_INQ.XPT';
 libname P_INQ xport;
-
 **Occupation**;
 filename P_OCQ URL 'https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/P_OCQ.XPT';
 libname P_OCQ xport;
-
 * Download SAS transport files and create temporary SAS datasets *;
+
 data demo;
-  set P_DEMO.P_DEMO (keep=seqn sddsrvyr riagendr ridageyr ridreth3 sdmvstra sdmvpsu ridexprg WTMECPRP WTINTPRP);  
+	set P_DEMO.P_DEMO (keep=seqn sddsrvyr riagendr ridageyr ridreth3 sdmvstra 
+		sdmvpsu ridexprg WTMECPRP WTINTPRP);
 run;
 
 data P_BPQ;
@@ -50,95 +46,113 @@ RUN;
 **PREPARE DATASET FOR HTN-OCC EXAMPLE**;
 
 data htnocc;
-	merge demo
-		  P_BPQ
-		  P_BPXO
-		  P_DIQ
-		  P_INQ
-		  P_OCQ;
+	merge demo P_BPQ P_BPXO P_DIQ P_INQ P_OCQ;
 	BY SEQN;
+	**Count of non-missing sbp and dbp**;
+	n_sbp=n(of BPXOSY1 - BPXOSY3);
+	n_dbp=n(of BPXODI1 - BPXODI3);
+	** Set DBP Values Of 0 To Missing For Calculating Average **;
+	array _DBP BPXODI1 - BPXODI3;
 
-**Count of non-missing sbp and dbp**;
-n_sbp = n(of BPXOSY1 - BPXOSY3);
-n_dbp = n(of BPXODI1 - BPXODI3);
-** Set DBP Values Of 0 To Missing For Calculating Average **;
-  array _DBP BPXODI1 - BPXODI3;
-  do over _DBP;
-    if (_DBP = 0) then _DBP = .;
-end;
+	do over _DBP;
 
-** Calculate Mean Systolic and Diastolic **;
-  mean_sbp = mean(of BPXOSY1 - BPXOSY3);
-  mean_dbp = mean(of BPXODI1 - BPXODI3);
+		if (_DBP=0) then
+			_DBP=.;
+	end;
+	** Calculate Mean Systolic and Diastolic **;
+	mean_sbp=mean(of BPXOSY1 - BPXOSY3);
+	mean_dbp=mean(of BPXODI1 - BPXODI3);
+	**HTN Variables**;
 
-**HTN Variables**;
+	if (mean_sbp >=130 or mean_dbp >=80 or bpq020=1 or BPQ040A=1) then
+		HTN=1;
+	else if (n_sbp > 0 and n_dbp > 0) then
+		HTN=0;
 
- if (mean_sbp >= 130 or mean_dbp >= 80 or bpq020 = 1 or BPQ040A = 1) then HTN = 1;  
-  else if (n_sbp > 0 and n_dbp > 0) then HTN = 0;
+	if mean_sbp < 130 and mean_dbp < 80 then
+		HTNCat=0;
+	else if 130>=mean_sbp<140 or 80>=mean_dbp<90 then
+		HTNCat=1;
+	else if 140>=mean_sbp<180 or 90>=mean_dbp<120 then
+		HTNCat=2;
+	else if mean_sbp > 180 or mean_dbp >120 then
+		HTNCat=3;
+	* race and Hispanic origin categories*;
 
-if mean_sbp < 130 and mean_dbp < 80 then HTNCat = 0;
-else if 130>=mean_sbp<140 or 80>=mean_dbp<90 then HTNCat = 1;
-else if 140>=mean_sbp<180 or 90>=mean_dbp<120 then HTNCat = 2;
-else if mean_sbp > 180 or mean_dbp >120 then HTNCat = 3;
+	select (ridreth3);
+		when (1, 2) raceEthCat=4;
+		* Hispanic ;
+		when (3) raceEthCat=1;
+		* Non-Hispanic white ;
+		when (4) raceEthCat=2;
+		* Non-Hispanic black ;
+		when (6) raceEthCat=3;
+		* Non-Hispanic Asian ;
+		when (7) raceEthCat=5;
+		* Non-Hispanic other race or Non-Hispanic persons of multiple races *;
+		otherwise ;
+	end;
+	* age categories for adults aged 18 and over *;
+
+	if 18<=ridageyr<40 then
+		ageCat_18=1;
+	else if 40 <=ridageyr<60 then
+		ageCat_18=2;
+	else if 60 <=ridageyr then
+		ageCat_18=3;
+	**analysis**;
+
+ods graphics on;
+
+proc freq data=htnocc;
+	tables HTNCat RIAGENDR raceEthCat ageCat_18 OCQ670/chisq Plots=all;
+	weight WTMECPRP;
+run;
 
 
-  * race and Hispanic origin categories*;
-  select (ridreth3);
-    when (1,2) raceEthCat=4; * Hispanic ;
-    when (3) raceEthCat=1; * Non-Hispanic white ;
-    when (4) raceEthCat=2; * Non-Hispanic black ;
-    when (6) raceEthCat=3; * Non-Hispanic Asian ;
-    when (7) raceEthCat=5; * Non-Hispanic other race or Non-Hispanic persons of multiple races *;
-    otherwise;
-  end;
-
-  * age categories for adults aged 18 and over *;
-  if 18<=ridageyr<40 then ageCat_18=1;
-  else if 40 <=ridageyr<60 then ageCat_18=2;
-  else if 60 <=ridageyr then ageCat_18=3;
+proc freq data=htnocc;
+	tables HTNCat*ageCat_18/chisq Plots=all;
+	weight WTMECPRP;
+run;
   
-  
-**analysis**;
 
 proc freq data=htnocc;
-table HTNCat;
-weight WTMECPRP;
-title "Weighted prevalence of hypertension among adults aged 18 and over, 2017-2020";
-run;
-
-
-proc freq data=htnocc;
-table OCQ670;
-weight WTINTPRP;
-title "Weighted prevalence of People who work at night among adults aged 18 and over, 2017-2020";
+	tables HTNCat*OCQ670/chisq Plots=all;
+	weight WTMECPRP;
 run;
 
 proc freq data=htnocc;
-tables HTNCat*ageCat_18;
-weight WTMECPRP;
+	tables HTNCat*raceEthCat/chisq Plots=all;
+	weight WTMECPRP;
 run;
 
 proc freq data=htnocc;
-tables HTNCat*OCQ670;
-weight WTMECPRP;
+	tables HTNCat*RIAGENDR/chisq Plots=all;
+	weight WTMECPRP;
 run;
 
+
+**HTN by Race controlling by gender; 
 proc freq data=htnocc;
-tables HTNCat raceEthCat;
-weight WTMECPRP;
+	tables RIAGENDR*HTNCat*raceEthCat/chisq Plots=all;
+	weight WTMECPRP;
 run;
 
+
+
+**HTN by Workschedule controlling by age; 
 proc freq data=htnocc;
-tables HTNCat*raceEthCat;
-weight WTMECPRP;
+	tables ageCat_18*HTNCat*OCQ670/chisq Plots=all;
+	weight WTMECPRP;
 run;
 
-proc freq data=htnocc;
-tables HTNCat*RIAGENDR;
-weight WTMECPRP;
-run;
+**HTN by Workschedule controlling by race; 
+
 
 proc freq data=htnocc;
-tables HTNCat *(RIAGENDR raceEthCat ageCat_18 OCQ670);
-weight WTMECPRP;
+	tables raceEthCat*HTNCat*OCQ670/chisq Plots=all;
+	weight WTMECPRP;
 run;
+
+
+ods graphics off;
