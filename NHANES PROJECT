@@ -155,4 +155,53 @@ proc freq data=htnocc;
 run;
 
 
+**HTN**;
+
+
+proc freq data=htnocc;
+	tables HTN*ageCat_18/chisq Plots=all;
+	weight WTMECPRP;
+run;
+  
+
+proc freq data=htnocc;
+	tables HTN*OCQ670/chisq Plots=all;
+	weight WTMECPRP;
+run;
+
+proc freq data=htnocc;
+	tables HTN*raceEthCat/chisq Plots=all;
+	weight WTMECPRP;
+run;
+
+proc freq data=htnocc;
+	tables HTN*RIAGENDR/chisq Plots=all;
+	weight WTMECPRP;
+run;
+
+
+**HTN by Race controlling by gender; 
+proc freq data=htnocc;
+	tables RIAGENDR*HTN*raceEthCat/chisq Plots=all;
+	weight WTMECPRP;
+run;
+
+
+
+**HTN by Workschedule controlling by age; 
+proc freq data=htnocc;
+	tables ageCat_18*HTN*OCQ670/chisq Plots=all;
+	weight WTMECPRP;
+run;
+
+**HTN by Workschedule controlling by race; 
+
+
+proc freq data=htnocc;
+	tables raceEthCat*HTN*OCQ670/chisq Plots=all;
+	weight WTMECPRP;
+run;
+
+
 ods graphics off;
+
