@@ -134,7 +134,7 @@ run;
 
 **HTN by Race controlling by gender; 
 proc freq data=htnocc;
-	tables RIAGENDR*HTNCat*raceEthCat/chisq Plots=all;
+	tables RIAGENDR*HTNCat*raceEthCat Plots=all;
 	weight WTMECPRP;
 run;
 
