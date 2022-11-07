@@ -2,6 +2,7 @@
 Select *
 From PortfolioProject.dbo.NashvilleHousing
 
+--------------------------------------------------------------------------------------------------------------------------
 
 -- Standardize Date Format
 
@@ -74,16 +75,11 @@ Add PropertySplitCity Nvarchar(255);
 Update NashvilleHousing
 SET PropertySplitCity = SUBSTRING(PropertyAddress, CHARINDEX(',', PropertyAddress) +1, LEN(PropertyAddress)) 
 
+
+
+
 SELECT *
 From PortfolioProject..NashvilleHousing
-
-
-
-Select *
-From PortfolioProject..NashvilleHousing
-
-
-
 
 
 Select OwnerAddress
@@ -132,7 +128,7 @@ Group by SoldAsVacant
 order by 2
 
 
-
+--Changing Y and N to Yes and No
 
 Select SoldAsVacant
 , CASE When SoldAsVacant = 'Y' THEN 'Yes'
@@ -152,6 +148,9 @@ SET SoldAsVacant = CASE When SoldAsVacant = 'Y' THEN 'Yes'
 
 
 
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
 -- Remove Duplicates
 
 WITH RowNumCTE AS(
@@ -169,6 +168,17 @@ Select *,
 From PortfolioProject..NashvilleHousing
 --order by ParcelID
 )
+
+-----------------------------------------------------
+--DELETING DUPLICATES
+
+DELETE
+From RowNumCTE
+Where row_num > 1
+Order by PropertyAddress
+
+-------------------------------------------------
+--CHECKING IF DUPLICATE IS GONE. 
 Select *
 From RowNumCTE
 Where row_num > 1
