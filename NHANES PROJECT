@@ -203,5 +203,5 @@ proc freq data=htnocc;
 run;
 
 
-ods graphics off
+ods graphics off;
 
