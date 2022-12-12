@@ -1,0 +1,90 @@
+
+
+from wsgiref import headers
+from bs4 import BeautifulSoup
+import requests
+import time
+import datetime
+import smtplib
+import csv
+import pandas as pd
+
+
+#connect to website
+
+URL = 'https://www.amazon.com/Bandai-Hobby-Unicorn-Version-Spirits/dp/B08BXCXP4T'
+
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36", "Accept-Encoding":"gzip, deflate", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
+
+page = requests.get(URL, headers=headers)
+
+soup1 = BeautifulSoup(page.content, "html.parser")
+
+soup2 = BeautifulSoup(soup1.prettify(), "html.parser")
+
+title = soup2.find(id='productTitle').get_text()
+title = title.strip()[0:]
+
+price = soup2.find(id='corePrice_feature_div').get_text()
+price = price.strip()[1:7]
+print(title)
+print(price)
+
+
+today = datetime.date.today()
+
+
+
+header = ['Title', 'Price', 'Date']
+data = [title, price, today]
+
+with open('AmazonWSDataSet.csv', 'w', newline='', encoding='UTF8') as c:
+    writer = csv.writer(c)
+    writer.writerow(header)
+    writer.writerow(data)
+
+
+df = pd.read_csv(r'C:\Users\ejane\source\repos\Webscraping1\Webscraping1\AmazonWSDataSet.csv')
+
+print(df)
+
+
+#appending data to csv
+with open('AmazonWSDataSet.csv', 'w', newline='', encoding='UTF8') as c:
+    writer = csv.writer(c)
+    writer.writerow(data)
+
+
+def check_price():
+    URL = 'https://www.amazon.com/Bandai-Hobby-Unicorn-Version-Spirits/dp/B08BXCXP4T'
+
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36", "Accept-Encoding":"gzip, deflate", "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "DNT":"1","Connection":"close", "Upgrade-Insecure-Requests":"1"}
+
+    page = requests.get(URL, headers=headers)
+
+    soup1 = BeautifulSoup(page.content, "html.parser")
+
+    soup2 = BeautifulSoup(soup1.prettify(), "html.parser")
+
+    title = soup2.find(id='productTitle').get_text()
+    title = title.strip()[0:]
+
+    price = soup2.find(id='corePrice_feature_div').get_text()
+    price = price.strip()[1:7]
+
+    today = datetime.date.today()
+
+    header = ['Title', 'Price', 'Date']
+    data = [title, price, today]
+
+    with open('AmazonWSDataSet.csv', 'w', newline='', encoding='UTF8') as c:
+      writer = csv.writer(c)
+      writer.writerow(data)
+
+while(True):
+    check_price()
+    time.sleep(604800)
+
+df = pd.read_csv(r'C:\Users\ejane\source\repos\Webscraping1\Webscraping1\AmazonWSDataSet.csv')
+
+print(df)
