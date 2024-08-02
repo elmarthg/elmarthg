@@ -76,7 +76,7 @@ data nhanes_combined;
 
     if Avg_BPXSY < 120 and Avg_BPXDI < 80 then BP_Category = 'BP0';
     else if Avg_BPXSY >= 120 and Avg_BPXDI < 130 and Avg_BPXDI < 80 then BP_Category = 'BP1';
-    else if (Avg_BPXSY >= 130 and Avg_BPXSY < 140) or (Avg_BPXDI >= 80 and Avg_BPXDI < 90) then BP_Category = 'BP2';
+    else if (Avg_BPXSY >= 130 and Avg_BPXDI < 140) or (Avg_BPXDI >= 80 and Avg_BPXDI < 90) then BP_Category = 'BP2';
     else if Avg_BPXSY >= 140 or Avg_BPXDI >= 90 then BP_Category = 'BP3';
 
     if LBXGH < 5.7 then Glucose_Category = 'DIA0';
@@ -116,141 +116,191 @@ proc freq data=nhanes_combined;
     tables HTN_Binary Diabetes_Binary BP_Category;
 run;
 
-proc surveymeans data=nhanes_combined mean stddev min max;
+proc surveymeans data=nhanes_combined mean stddev min max median;
     strata SDMVSTRA;
     cluster SDMVPSU;
     weight MEC4YR;
     var Avg_BPXSY Avg_BPXDI LBXGH;
 run;
 
-proc surveyfreq data=nhanes_combined;
-    strata SDMVSTRA;
-    cluster SDMVPSU;
-    weight MEC4YR;
-    tables cycle*Age_Category*Race_Category*HTN_Binary*Condition_Group / row cl;
-run;
-
-proc surveyfreq data=nhanes_combined;
-    strata SDMVSTRA;
-    cluster SDMVPSU;
-    weight MEC4YR;
-    tables cycle*Age_Category*Race_Category*Diabetes_Binary*Condition_Group / row cl;
-run;
-
-proc surveyfreq data=nhanes_combined;
-    strata SDMVSTRA;
-    cluster SDMVPSU;
-    weight MEC4YR;
-    tables Race_Category*Glucose_Category / chisq;
-run;
-
-proc surveyfreq data=nhanes_combined;
-    strata SDMVSTRA;
-    cluster SDMVPSU;
-    weight MEC4YR;
-    tables Race_Category*BP_Category / chisq;
-run;
-
-proc surveyfreq data=nhanes_combined;
-    strata SDMVSTRA;
-    cluster SDMVPSU;
-    weight MEC4YR;
-    tables Age_Category*Glucose_Category / chisq;
-run;
-
-
-
-
-proc surveyfreq data=nhanes_combined;
-    strata SDMVSTRA;
-    cluster SDMVPSU;
-    weight MEC4YR;
-    tables RIAGENDR*BP_Category / chisq;
-run;
 
 proc surveylogistic data=nhanes_combined;
     strata SDMVSTRA;
     cluster SDMVPSU;
     weight MEC4YR;
-    class Race_Category Age_Category RIAGENDR;
-    model Diabetes_Binary(event='1') = Race_Category Age_Category RIAGENDR;
+    model Diabetes_Binary(event='1') = HTN_Binary;
+    output out=pred_htn_diabetes p=pred_prob;
 run;
+
+proc sgplot data=pred_htn_diabetes;
+    title "Predicted Probability of Diabetes by Hypertension Status";
+    vbar HTN_Binary / response=pred_prob stat=mean;
+    xaxis label="Hypertension Status (0=No, 1=Yes)";
+    yaxis label="Predicted Probability of Diabetes";
+run;
+
 
 proc surveylogistic data=nhanes_combined;
     strata SDMVSTRA;
     cluster SDMVPSU;
     weight MEC4YR;
-    class Race_Category Age_Category RIAGENDR;
-    model HTN_Binary(event='1') = Race_Category Age_Category RIAGENDR;
+    model HTN_Binary(event='1') = RIDAGEYR;
+    output out=pred_age_htn p=pred_prob;
 run;
 
+proc sgplot data=pred_age_htn;
+    title "Predicted Probability of Hypertension by Age";
+    scatter x=RIDAGEYR y=pred_prob;
+    xaxis label="Age";
+    yaxis label="Predicted Probability of Hypertension";
+run;
+
+
+proc surveylogistic data=nhanes_combined;
+    strata SDMVSTRA;
+    cluster SDMVPSU;
+    weight MEC4YR;
+    model Diabetes_Binary(event='1') = RIDAGEYR;
+    output out=pred_age_diabetes p=pred_prob;
+run;
+
+proc sgplot data=pred_age_diabetes;
+    title "Predicted Probability of Diabetes by Age";
+    scatter x=RIDAGEYR y=pred_prob;
+    xaxis label="Age";
+    yaxis label="Predicted Probability of Diabetes";
+run;
+
+
+proc surveylogistic data=nhanes_combined;
+    strata SDMVSTRA;
+    cluster SDMVPSU;
+    weight MEC4YR;
+    class Race_Category;
+    model HTN_Binary(event='1') = Race_Category;
+    output out=pred_race_htn p=pred_prob;
+run;
+
+proc sgplot data=pred_race_htn;
+    title "Predicted Probability of Hypertension by Race";
+    vbar Race_Category / response=pred_prob stat=mean;
+    xaxis label="Race Category";
+    yaxis label="Predicted Probability of Hypertension";
+run;
+
+/* Logistic Regression and Visualization for Race and Diabetes */
+proc surveylogistic data=nhanes_combined;
+    strata SDMVSTRA;
+    cluster SDMVPSU;
+    weight MEC4YR;
+    class Race_Category;
+    model Diabetes_Binary(event='1') = Race_Category;
+    output out=pred_race_diabetes p=pred_prob;
+run;
+
+proc sgplot data=pred_race_diabetes;
+    title "Predicted Probability of Diabetes by Race";
+    vbar Race_Category / response=pred_prob stat=mean;
+    xaxis label="Race Category";
+    yaxis label="Predicted Probability of Diabetes";
+run;
+
+/* Prevalence Analysis Over Time */
 proc surveyfreq data=nhanes_combined;
     strata SDMVSTRA;
     cluster SDMVPSU;
     weight MEC4YR;
-    tables cycle*Condition_Group*RIAGENDR*Race_Category / row cl;
+    tables cycle*HTN_Binary cycle*Diabetes_Binary / row cl;
 run;
 
-proc freq data=nhanes_combined;
-    tables cycle*Condition_Group;
-run;
-
-proc surveyfreq data=nhanes_combined;
-    strata SDMVSTRA;
-    cluster SDMVPSU;
-    weight MEC4YR;
-    tables cycle*Condition_Group / chisq;
-run;
-
-/* Correlation Studies */
-
-
-proc surveyreg data=nhanes_combined;
-    strata SDMVSTRA;
-    cluster SDMVPSU;
-    weight MEC4YR;
-    model LBXGH = Avg_BPXSY Avg_BPXDI RIDAGEYR;
-run;
-
-/* Visualizations */
-
-/* Scatter plots for correlation studies */
-
-
-proc sgscatter data=nhanes_combined;
-    title "Scatter Plot for Avg_BPXSY vs LBXGH";
-    plot Avg_BPXSY*LBXGH / grid;
-run;
-
-
-/* Bar charts for categorical variables */
-proc sgplot data=nhanes_combined;
-    title "Bar Chart for Blood Pressure Categories";
-    vbar BP_Category / response=Avg_BPXSY stat=mean;
-run;
-
-proc sgplot data=nhanes_combined;
-    title "Bar Chart for Glucose Categories";
-    vbar Glucose_Category / response=LBXGH stat=mean;
-run;
-
-proc sgplot data=nhanes_combined;
-    title "Bar Chart for Race Categories";
-    vbar Race_Category / response=Avg_BPXSY stat=mean;
-run;
-
+/* Bar Chart for Hypertension Prevalence by Age, Race, and Cycle */
 proc sgpanel data=nhanes_combined;
     panelby cycle;
     vbar Age_Category / response=HTN_Binary stat=percent group=Race_Category groupdisplay=cluster;
     rowaxis label="Prevalence (%)";
     colaxis label="Age Category";
-    title "Prevalence of Hypertension by Age, Race, and Condition Group";
+    title "Prevalence of Hypertension by Age, Race, and Cycle";
+    keylegend / title="Race Category";
 run;
 
+proc surveyfreq data=nhanes_combined;
+    strata SDMVSTRA;
+    cluster SDMVPSU;
+    weight MEC4YR;
+    tables Age_Category*HTN_Binary Age_Category*Diabetes_Binary / row cl;
+run;
+
+/* Bar Chart for Hypertension Prevalence by Age Group */
 proc sgpanel data=nhanes_combined;
     panelby cycle;
-    vbar Age_Category / response=Diabetes_Binary stat=percent group=Race_Category groupdisplay=cluster;
+    vbar Age_Category / response=HTN_Binary stat=percent group=cycle groupdisplay=cluster;
     rowaxis label="Prevalence (%)";
     colaxis label="Age Category";
-    title "Prevalence of Diabetes by Age, Race, and Condition Group";
+    title "Prevalence of Hypertension by Age Group and Cycle";
+    keylegend / title="Cycle";
+run;
+
+/* Bar Chart for Diabetes Prevalence by Age Group */
+proc sgpanel data=nhanes_combined;
+    panelby cycle;
+    vbar Age_Category / response=Diabetes_Binary stat=percent group=cycle groupdisplay=cluster;
+    rowaxis label="Prevalence (%)";
+    colaxis label="Age Category";
+    title "Prevalence of Diabetes by Age Group and Cycle";
+    keylegend / title="Cycle";
+run;
+
+
+proc surveyfreq data=nhanes_combined;
+    strata SDMVSTRA;
+    cluster SDMVPSU;
+    weight MEC4YR;
+    tables RIAGENDR*HTN_Binary RIAGENDR*Diabetes_Binary / row cl;
+run;
+
+/* Bar Chart for Hypertension Prevalence by Gender */
+proc sgpanel data=nhanes_combined;
+    panelby cycle;
+    vbar RIAGENDR / response=HTN_Binary stat=percent group=cycle groupdisplay=cluster;
+    rowaxis label="Prevalence (%)";
+    colaxis label="Gender";
+    title "Prevalence of Hypertension by Gender and Cycle";
+    keylegend / title="Cycle";
+run;
+
+/* Bar Chart for Diabetes Prevalence by Gender */
+proc sgpanel data=nhanes_combined;
+    panelby cycle;
+    vbar RIAGENDR / response=Diabetes_Binary stat=percent group=cycle groupdisplay=cluster;
+    rowaxis label="Prevalence (%)";
+    colaxis label="Gender";
+    title "Prevalence of Diabetes by Gender and Cycle";
+    keylegend / title="Cycle";
+run;
+
+proc surveyfreq data=nhanes_combined;
+    strata SDMVSTRA;
+    cluster SDMVPSU;
+    weight MEC4YR;
+    tables Race_Category*HTN_Binary Race_Category*Diabetes_Binary / row cl;
+run;
+
+/* Bar Chart for Hypertension Prevalence by Race */
+proc sgpanel data=nhanes_combined;
+    panelby cycle;
+    vbar Race_Category / response=HTN_Binary stat=percent group=cycle groupdisplay=cluster;
+    rowaxis label="Prevalence (%)";
+    colaxis label="Race Category";
+    title "Prevalence of Hypertension by Race and Cycle";
+    keylegend / title="Cycle";
+run;
+
+/* Bar Chart for Diabetes Prevalence by Race */
+proc sgpanel data=nhanes_combined;
+    panelby cycle;
+    vbar Race_Category / response=Diabetes_Binary stat=percent group=cycle groupdisplay=cluster;
+    rowaxis label="Prevalence (%)";
+    colaxis label="Race Category";
+    title "Prevalence of Diabetes by Race and Cycle";
+    keylegend / title="Cycle";
 run;
